@@ -1,1 +1,1 @@
-# demo-tform-servless-azure
+# demo-tform-serverless-azure

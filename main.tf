@@ -7,13 +7,13 @@ resource "random_string" "rand" {
 locals {
   namespace = substr(join("-", [var.namespace, random_string.rand.result]), 0, 24)
 }
-
+ 
 resource "azurerm_resource_group" "default" {
   name     = local.namespace
   location = var.region
 }
-
-
+ 
+ 
 resource "azurerm_storage_account" "storage_account" {
   name                     = random_string.rand.result
   resource_group_name      = azurerm_resource_group.default.name
@@ -27,17 +27,19 @@ resource "azurerm_storage_container" "storage_container" {
   storage_account_name  = azurerm_storage_account.storage_account.name
   container_access_type = "private"
 }
-
+ 
 module "ballroom" {
-  source = "scottwinkler/ballroom/azure" 
+  source = "scottwinkler/ballroom/azure"
 }
-
+ 
 resource "azurerm_storage_blob" "storage_blob" {
-  name = "server.zip"
-  storage_account_name = azurerm_storage_account.storage_account.name storage_container_name = azurerm_storage_container.storage_container.name type = "block"
-  source = module.ballroom.output_path
+  name                   = "server.zip"
+  storage_account_name   = azurerm_storage_account.storage_account.name
+  storage_container_name = azurerm_storage_container.storage_container.name
+  type                   = "block"
+  source                 = module.ballroom.output_path
 }
-
+ 
 data "azurerm_storage_account_sas" "storage_sas" {
   connection_string = azurerm_storage_account.storage_account.primary_connection_string
  
@@ -68,11 +70,11 @@ data "azurerm_storage_account_sas" "storage_sas" {
     process = false
   }
 }
-
+ 
 locals {
   package_url = replace("https://${azurerm_storage_account.storage_account.name}.blob.core.windows.net/${azurerm_storage_container.storage_container.name}/${azurerm_storage_blob.storage_blob.name}${data.azurerm_storage_account_sas.storage_sas.sas}", "%3d", "=")
 }
-
+ 
 resource "azurerm_app_service_plan" "plan" {
   name                = local.namespace
   location            = azurerm_resource_group.default.location
@@ -108,4 +110,3 @@ resource "azurerm_function_app" "function" {
     AzureWebJobsDisableHomepage    = true
   }
 }
-
